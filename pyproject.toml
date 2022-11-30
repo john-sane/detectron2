@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "detectron2"
+version = "0.6.0"
+description = "Detectron2 is Facebook AI Research's next generation library that provides state-of-the-art detection and segmentation algorithms. It is the successor of Detectron and maskrcnn-benchmark. It supports a number of computer vision research projects and production applications in Facebook."
+authors = [ "facebookresearch", "Johannes Strodel<johannes.strodel@gmail.com>" ]
+license = "Apache 2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "^1.23.5"
+torch = [
+    {version = "1.12.1", platform = "darwin"},
+    {version = "^1.13.0", platform = "linux"},
+    {version = "^1.13.0", platform = "win32"}
+]
+pillow = ">=7.1"
+matplotlib = "^3.6.2"
+pycocotools = ">=2.0.2"
+termcolor = ">=1.1"
+yacs = ">=0.1.8"
+tabulate = "^0.9.0"
+cloudpickle = "^2.2.0"
+tensorboard = "^2.11.0"
+tqdm = ">4.29.0"
+fvcore = ">=0.1.5,<0.1.6"
+iopath = ">=0.1.7,<0.1.10"
+future = "^0.18.2"
+pydot = "^1.4.2"
+omegaconf = ">=2.1"
+hydra-core = ">=1.1"
+black = "22.3.0"
+timm = "^0.6.12"
+fairscale = "^0.4.12"
+packaging = "^21.3"
+scipy = ">1.5.1"
+shapely = "^1.8.5.post1"
+pygments = ">=2.2"
+psutil = "^5.9.4"
+panopticapi = { url = "https://github.com/cocodataset/panopticapi/archive/master.zip" }
+dataclasses = {markers = "python_version < '3.7'", version = "^0.8"}
+
+[tool.poetry.group.dev.dependencies]
+flake8 = "3.8.1"
+isort = "4.3.21"
+flake8-bugbear = "^22.10.27"
+flake8-comprehensions = "^3.10.1"
+
+[build-system]
+requires = [
+    "setuptools >= 65.6.3", 
+    "wheel >= 0.38.4",
+    "torch == 1.12.1",
+]
+build-backend = "setuptools.build_meta"
