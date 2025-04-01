@@ -11,8 +11,8 @@ python = "^3.10"
 numpy = "^1.23.5"
 torch = [
     {version = "1.12.1", platform = "darwin"},
-    {version = "^1.13.0", platform = "linux"},
-    {version = "^1.13.0", platform = "win32"}
+    {version = "^1.13.0+cu117", platform = "linux"},
+    {version = "^1.13.0+cu117", platform = "win32"}
 ]
 pillow = ">=7.1"
 matplotlib = "^3.6.2"
