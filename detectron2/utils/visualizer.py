@@ -354,7 +354,9 @@ class Visualizer:
 
     # TODO implement a fast, rasterized version using OpenCV
 
-    def __init__(self, img_rgb, metadata=None, scale=1.0, instance_mode=ColorMode.IMAGE):
+    def __init__(
+        self, img_rgb, metadata=None, scale=1.0, instance_mode=ColorMode.IMAGE, font_size_scale=1.0
+    ):
         """
         Args:
             img_rgb: a numpy array of shape (H, W, C), where H and W correspond to
@@ -365,6 +367,7 @@ class Visualizer:
             metadata (Metadata): dataset metadata (e.g. class names and colors)
             instance_mode (ColorMode): defines one of the pre-defined style for drawing
                 instances on an image.
+            font_size_scale: extra scaling of font size on top of default font size
         """
         self.img = np.asarray(img_rgb).clip(0, 255).astype(np.uint8)
         if metadata is None:
@@ -374,13 +377,14 @@ class Visualizer:
         self.cpu_device = torch.device("cpu")
 
         # too small texts are useless, therefore clamp to 9
-        self._default_font_size = max(
-            np.sqrt(self.output.height * self.output.width) // 90, 10 // scale
+        self._default_font_size = (
+            max(np.sqrt(self.output.height * self.output.width) // 90, 10 // scale)
+            * font_size_scale
         )
         self._instance_mode = instance_mode
         self.keypoint_threshold = _KEYPOINT_THRESHOLD
 
-    def draw_instance_predictions(self, predictions):
+    def draw_instance_predictions(self, predictions, jittering: bool = True):
         """
         Draw instance-level prediction results on an image.
 
@@ -388,6 +392,8 @@ class Visualizer:
             predictions (Instances): the output of an instance detection/segmentation
                 model. Following fields will be used to draw:
                 "pred_boxes", "pred_classes", "scores", "pred_masks" (or "pred_masks_rle").
+            jittering: if True, in color mode SEGMENTATION, randomly jitter the colors per class
+                to distinguish instances from the same class
 
         Returns:
             output (VisImage): image object with visualizations.
@@ -405,9 +411,15 @@ class Visualizer:
             masks = None
 
         if self._instance_mode == ColorMode.SEGMENTATION and self.metadata.get("thing_colors"):
-            colors = [
-                self._jitter([x / 255 for x in self.metadata.thing_colors[c]]) for c in classes
-            ]
+            colors = (
+                [self._jitter([x / 255 for x in self.metadata.thing_colors[c]]) for c in classes]
+                if jittering
+                else [
+                    tuple(mplc.to_rgb([x / 255 for x in self.metadata.thing_colors[c]]))
+                    for c in classes
+                ]
+            )
+
             alpha = 0.8
         else:
             colors = None
@@ -433,7 +445,14 @@ class Visualizer:
         )
         return self.output
 
-    def draw_sem_seg(self, sem_seg, area_threshold=None, alpha=0.8):
+    def draw_sem_seg(
+        self,
+        sem_seg,
+        area_threshold=None,
+        alpha=0.8,
+        draw_text=True,
+        edge_color=_OFF_WHITE,
+    ):
         """
         Draw semantic segmentation predictions/labels.
 
@@ -442,7 +461,8 @@ class Visualizer:
                 Each value is the integer label of the pixel.
             area_threshold (int): segments with less than `area_threshold` are not drawn.
             alpha (float): the larger it is, the more opaque the segmentations are.
-
+            draw_text (bool): if True, draw class name text over the mask
+            edge_color: color of polygon edge
         Returns:
             output (VisImage): image object with visualizations.
         """
@@ -453,16 +473,16 @@ class Visualizer:
         labels = labels[sorted_idxs]
         for label in filter(lambda l: l < len(self.metadata.stuff_classes), labels):
             try:
-                mask_color = [x / 255 for x in self.metadata.stuff_colors[label]]
+                mask_color = [x / 255 for x in self.metadata.stuff_colors[int(label)]]
             except (AttributeError, IndexError):
                 mask_color = None
 
             binary_mask = (sem_seg == label).astype(np.uint8)
-            text = self.metadata.stuff_classes[label]
+            text = self.metadata.stuff_classes[int(label)] if draw_text else None
             self.draw_binary_mask(
                 binary_mask,
                 color=mask_color,
-                edge_color=_OFF_WHITE,
+                edge_color=edge_color,
                 text=text,
                 alpha=alpha,
                 area_threshold=area_threshold,
@@ -537,7 +557,7 @@ class Visualizer:
 
     def draw_dataset_dict(self, dic):
         """
-        Draw annotations/segmentaions in Detectron2 Dataset format.
+        Draw annotations/segmentations in Detectron2 Dataset format.
 
         Args:
             dic (dict): annotation/segmentation data of one image, in Detectron2 Dataset format.
@@ -558,9 +578,11 @@ class Visualizer:
                 keypts = None
 
             boxes = [
-                BoxMode.convert(x["bbox"], x["bbox_mode"], BoxMode.XYXY_ABS)
-                if len(x["bbox"]) == 4
-                else x["bbox"]
+                (
+                    BoxMode.convert(x["bbox"], x["bbox_mode"], BoxMode.XYXY_ABS)
+                    if len(x["bbox"]) == 4
+                    else x["bbox"]
+                )
                 for x in annos
             ]
 
@@ -1200,7 +1222,7 @@ class Visualizer:
         modified_lightness = 0.0 if modified_lightness < 0.0 else modified_lightness
         modified_lightness = 1.0 if modified_lightness > 1.0 else modified_lightness
         modified_color = colorsys.hls_to_rgb(polygon_color[0], modified_lightness, polygon_color[2])
-        return modified_color
+        return tuple(np.clip(modified_color, 0.0, 1.0))
 
     def _convert_boxes(self, boxes):
         """
@@ -1228,7 +1250,7 @@ class Visualizer:
             m = m.numpy()
         ret = []
         for x in m:
-            if isinstance(x, GenericMask):
+            if isinstance(x, GenericMask) or x.__class__.__name__ == "GenericMask":
                 ret.append(x)
             else:
                 ret.append(GenericMask(x, self.output.height, self.output.width))

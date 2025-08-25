@@ -8,7 +8,6 @@ import unittest
 from typing import Callable
 import torch
 import torch.onnx.symbolic_helper as sym_help
-from packaging import version
 from torch._C import ListType
 from torch.onnx import register_custom_op_symbolic
 
@@ -19,6 +18,7 @@ from detectron2.data.detection_utils import read_image
 from detectron2.modeling import build_model
 from detectron2.structures import Boxes, Instances, ROIMasks
 from detectron2.utils.file_io import PathManager
+from detectron2.utils.torch_version_utils import min_torch_version
 
 
 """
@@ -162,18 +162,19 @@ def reload_lazy_config(cfg):
         return LazyConfig.load(fname)
 
 
-def min_torch_version(min_version: str) -> bool:
+def has_dynamic_axes(onnx_model):
     """
-    Returns True when torch's  version is at least `min_version`.
+    Return True when all ONNX input/output have only dynamic axes for all ranks
     """
-    try:
-        import torch
-    except ImportError:
-        return False
-
-    installed_version = version.parse(torch.__version__.split("+")[0])
-    min_version = version.parse(min_version)
-    return installed_version >= min_version
+    return all(
+        not dim.dim_param.isnumeric()
+        for inp in onnx_model.graph.input
+        for dim in inp.type.tensor_type.shape.dim
+    ) and all(
+        not dim.dim_param.isnumeric()
+        for out in onnx_model.graph.output
+        for dim in out.type.tensor_type.shape.dim
+    )
 
 
 def register_custom_op_onnx_export(
