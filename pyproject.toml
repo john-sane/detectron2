@@ -7,7 +7,7 @@ license = "Apache 2.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">3.12 <3.13"
+python = ">=3.12,<3.13"
 numpy = "*"
 # torch = [
 #     {version = "1.12.1", platform = "darwin"},
@@ -15,9 +15,34 @@ numpy = "*"
 #     {version = "^1.12.1+cu117", platform = "win32"}
 # ]
 # WIP: upgrade to torch 2.8 and cu12.8
-torch = { version = "==2.8.0+cu126", markers = "platform_system == 'Linux' and python_version >= '3.12'", source = "pytorch-cu126" }
-torchaudio = { version = "==2.8.0+cu126", markers = "platform_system == 'Linux' and python_version >= '3.12'", source = "pytorch-cu126" }
-torchvision = { version = "==0.23.0+cu126", markers = "platform_system == 'Linux' and python_version >= '3.12'", source = "pytorch-cu126" }
+
+# torch = [
+#     { version = "==2.8.0", markers = "sys_platform == 'darwin'" },
+#     { version = ">=2.8.0,<2.9", markers = "sys_platform == 'linux'", source = "pytorch-cu126" },
+#     { version = ">=2.8.0,<2.9", markers = "sys_platform == 'win32'", source = "pytorch-cu126" }
+# ]
+torch = [
+  { version = "==2.4.1", markers = "sys_platform == 'darwin' and platform_machine == 'arm64'", source = "PyPI"},
+  { version = ">=2.4.1,<2.5", markers = "sys_platform != 'darwin'", source = "pytorch-cu121" }
+]
+torchaudio = [
+  { version = "*", markers = "sys_platform == 'darwin' and platform_machine == 'arm64'", source = "PyPI"},
+  { version = ">=2.4.1,<2.5", markers = "sys_platform != 'darwin'", source = "pytorch-cu121" }
+]
+torchvision = [
+  { version = "*", markers = "sys_platform == 'darwin' and platform_machine == 'arm64'", source = "PyPI"},
+  { version = ">=0.19.1,<0.20", markers = "sys_platform != 'darwin'", source = "pytorch-cu121" }
+]
+# torchaudio = [
+#     { version = "==2.8.0", markers = "sys_platform == 'darwin'" },
+#     { version = ">=2.8.0,<2.9", markers = "sys_platform == 'linux'", source = "pytorch-cu126" },
+#     { version = ">=2.8.0,<2.9", markers = "sys_platform == 'win32'", source = "pytorch-cu126" }
+# ]
+# torchvision = [
+#     { version = "==0.23.0", markers = "sys_platform == 'darwin'" },
+#     { version = ">=0.23.0,<0.24", markers = "sys_platform == 'linux'", source = "pytorch-cu126" },
+#     { version = ">=0.23.0,<0.24", markers = "sys_platform == 'win32'", source = "pytorch-cu126" }
+# ]
 pillow = "*"
 matplotlib = "*"
 pycocotools = "*"
@@ -51,10 +76,20 @@ isort = "4.3.21"
 flake8-bugbear = "^22.10.27"
 flake8-comprehensions = "^3.10.1"
 
+[[tool.poetry.source]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+priority = "explicit"
+
+[[tool.poetry.source]]
+name = "nvidia"
+url = "https://pypi.nvidia.com"
+priority = "explicit"
+
 [build-system]
 requires = [
-    "setuptools >= 65.6.3", 
-    "wheel >= 0.38.4",
-    "torch == 2.8.0",
+    "setuptools >= 80.9.0", 
+    "wheel >= 0.45.1",
+    "torch >= 2.4.1"
 ]
 build-backend = "setuptools.build_meta"
