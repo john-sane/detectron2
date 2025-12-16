@@ -18,6 +18,7 @@ _ext
 *.so
 *.dll
 *.egg-info/
+poetry.lock
 build/
 dist/
 wheels/
