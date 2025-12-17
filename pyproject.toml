@@ -7,11 +7,11 @@ license = "Apache 2.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.12"
+python = ">=3.10,<3.11"
 numpy = "^1.24"
 torch = [
   { version = "==1.12.1", markers = "sys_platform == 'darwin' and python_version < '3.11'" },
-  { version = "==1.13.1+cu117", markers = "sys_platform == 'linux' and python_version < '3.12'", source = "pytorch-cu117" },
+  { version = "==1.13.1+cu117", markers = "sys_platform == 'linux' and python_version < '3.11'", source = "pytorch-cu117" },
   { version = "==1.13.1+cu117", markers = "sys_platform == 'win32' and python_version < '3.11'", source = "pytorch-cu117" }
 ]
 pillow = ">=7.1"
